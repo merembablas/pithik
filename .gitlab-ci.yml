@@ -1,0 +1,22 @@
+stages:
+    - deploy
+
+before_script:
+    - apt-get update -y && apt-get install rsync -y
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+
+deploy-to-production:
+    image: "ruby:2.6"
+    stage: deploy
+    script:
+        - rsync -avuz --exclude '.git' --exclude '.gitlab-ci.yml' -e ssh $CI_PROJECT_DIR/ merembablas@128.199.104.60:/home/merembablas/www/pithik
+        - ssh merembablas@128.199.104.60 'cd /home/merembablas/www/pithik/ && composer install'
+        - ssh merembablas@128.199.104.60 'find /home/merembablas/www/pithik -type f -exec chmod 644 {} \;'
+        - ssh merembablas@128.199.104.60 'find /home/merembablas/www/pithik -type d -exec chmod 755 {} \;'
+        - ssh merembablas@128.199.104.60 'find /home/merembablas/www/pithik/storage -type d -exec chmod 777 {} \;'
+    only:
+        - master
+  
