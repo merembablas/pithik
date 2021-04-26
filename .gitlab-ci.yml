@@ -12,11 +12,11 @@ deploy-to-production:
     image: "ruby:2.6"
     stage: deploy
     script:
-        - rsync -avuz --exclude '.git' --exclude '.gitlab-ci.yml' -e ssh $CI_PROJECT_DIR/ merembablas@128.199.104.60:/home/merembablas/www/pithik
-        - ssh merembablas@128.199.104.60 'cd /home/merembablas/www/pithik/ && composer install'
-        - ssh merembablas@128.199.104.60 'find /home/merembablas/www/pithik -type f -exec chmod 644 {} \;'
-        - ssh merembablas@128.199.104.60 'find /home/merembablas/www/pithik -type d -exec chmod 755 {} \;'
-        - ssh merembablas@128.199.104.60 'find /home/merembablas/www/pithik/storage -type d -exec chmod 777 {} \;'
+        - rsync -avuz --exclude '.git' --exclude '.gitlab-ci.yml' -e ssh $CI_PROJECT_DIR/ merembablas@139.162.43.174:/home/merembablas/www/pithik
+        - ssh merembablas@139.162.43.174 'cd /home/merembablas/www/pithik/ && composer install'
+        - ssh merembablas@139.162.43.174 'find /home/merembablas/www/pithik -type f -exec chmod 644 {} \;'
+        - ssh merembablas@139.162.43.174 'find /home/merembablas/www/pithik -type d -exec chmod 755 {} \;'
+        - ssh merembablas@139.162.43.174 'find /home/merembablas/www/pithik/storage -type d -exec chmod 777 {} \;'
     only:
         - master
   
