@@ -5,6 +5,7 @@ namespace App\Console\Commands\Data;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Services\IndodaxService;
 
 class Trade extends Command
@@ -51,7 +52,8 @@ class Trade extends Command
         $partition[] = $theTime + (12 * 300) - 1;
         $partition = array_chunk($partition, 2);
 
-        $result = $iddx->tradeAll();
+        $pairs = $this->_getQueue($iddx->pairs());
+        $result = $iddx->trade($pairs);
         foreach ($result as $pair => $trades) {
             $options = DB::table('options')->where('key', 'last_tid_' . $pair)->limit(1)->get();
             $lastTid = isset($options[0]) ? (int) $options[0]->value : 0;
@@ -131,5 +133,20 @@ class Trade extends Command
                 'updated_at' => date('Y-m-d H:i:s')
             ], [ 'key' ]);
         }
+    }
+
+    private function _getQueue($pairs) {
+        $chunks = array_chunk($pairs, 30);
+
+        $queue = Cache::get('trade_pairs_queue');
+        if (!$queue) {
+            $queue = 1;
+            Cache::put('trade_pairs_queue', $queue);
+        } else {
+            $queue = $queue >= 5 ? 1 : $queue + 1;
+            Cache::put('trade_pairs_queue', $queue);
+        }
+
+        return $chunks[$queue - 1];
     }
 }

@@ -42,10 +42,8 @@ class IndodaxService
         return $data['tickers'];
     }
 
-    public function tradeAll()
+    public function trade($pairs)
     {
-        $pairs = $this->pairs();
-
         $data = [];
         foreach ($pairs as $pair) {
             $params = [ 'path' => '/trades/' . $pair ];
