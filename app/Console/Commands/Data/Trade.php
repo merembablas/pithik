@@ -126,12 +126,19 @@ class Trade extends Command
                 }
             }
 
-            DB::table('options')->upsert([
-                'key' => 'last_tid_' . $pair,
-                'value' => $trades[0]['tid'],
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s')
-            ], [ 'key' ]);
+            if (count($options) > 0) {
+                DB::table('options')->where('key', 'last_tid_' . $pair)->update([
+                    'value' => $trades[0]['tid'],
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+            } else {
+                DB::table('options')->insert([
+                    'key' => 'last_tid_' . $pair,
+                    'value' => $trades[0]['tid'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+            }
         }
     }
 
