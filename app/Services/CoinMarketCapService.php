@@ -30,7 +30,7 @@ class CoinMarketCapService
                 $data[strtolower($coin['symbol'])] = $coin['quote']['USD']['price'];
             }
 
-            Cache::put('cmc_data', $data, $seconds = 60 * 60 * 24);
+            Cache::put('cmc_data', $data, $seconds = 60 * 3);
         }
 
         return $data;
