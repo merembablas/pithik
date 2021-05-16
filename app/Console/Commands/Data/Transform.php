@@ -49,7 +49,7 @@ class Transform extends Command
             // DAILY TRADE
             $trades = DB::table('trades')
                 ->where('pair', $pair)
-                ->where('timeframe', '5m')
+                ->where('timeframe', '15m')
                 ->whereDate('created_at', '>=', date('Y-m-d H:i:s', $yesterdayStart))
                 ->whereDate('created_at', '<=', date('Y-m-d H:i:s', $yesterdayEnd))
                 ->orderBy('created_at', 'asc')->get();

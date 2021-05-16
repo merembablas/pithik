@@ -15,7 +15,7 @@ class Trade extends Command
      *
      * @var string
      */
-    protected $signature = 'data:trade {timeframe=5m : Timeframe}';
+    protected $signature = 'data:trade {timeframe=15m : Timeframe}';
 
     /**
      * The console command description.
@@ -44,12 +44,12 @@ class Trade extends Command
         $currentHour = date('Y-m-d H:00:00');
         $theTime = strtotime($currentHour);
         $partition = [ $theTime ];
-        foreach (range(1, 11) as $number) {
-            $partition[] = $theTime + ($number * 300) - 1;
-            $partition[] = $theTime + ($number * 300);
+        foreach (range(1, 3) as $number) {
+            $partition[] = $theTime + ($number * 900) - 1;
+            $partition[] = $theTime + ($number * 900);
         }
 
-        $partition[] = $theTime + (12 * 300) - 1;
+        $partition[] = $theTime + (4 * 900) - 1;
         $partition = array_chunk($partition, 2);
 
         $pairs = $this->_getQueue($iddx->pairs());
@@ -143,14 +143,14 @@ class Trade extends Command
     }
 
     private function _getQueue($pairs) {
-        $chunks = array_chunk($pairs, 30);
-
+        $batch =  ceil(count($pairs) / 15);
+        $chunks = array_chunk($pairs, $batch);
         $queue = Cache::get('trade_pairs_queue');
         if (!$queue) {
             $queue = 1;
             Cache::put('trade_pairs_queue', $queue);
         } else {
-            $queue = $queue >= 5 ? 1 : $queue + 1;
+            $queue = $queue >= count($chunks) ? 1 : $queue + 1;
             Cache::put('trade_pairs_queue', $queue);
         }
 

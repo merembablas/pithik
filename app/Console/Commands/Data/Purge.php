@@ -12,7 +12,7 @@ class Purge extends Command
      *
      * @var string
      */
-    protected $signature = 'data:purge {timeframe=1m : Timeframe}';
+    protected $signature = 'data:purge {timeframe=15m : Timeframe}';
 
     /**
      * The console command description.
@@ -42,12 +42,12 @@ class Purge extends Command
         $purgeMaxDate = strtotime('-8 day', $todayStart);
 
         DB::table('tickers')
-            ->where('timeframe', $this->argument('timeframe'))
+            ->where('timeframe', '1m')
             ->whereDate('created_at', '<=', date('Y-m-d H:i:s', $purgeMaxDate))
             ->delete();
 
         DB::table('trades')
-            ->where('timeframe', $this->argument('timeframe'))
+            ->where('timeframe', '15m')
             ->whereDate('created_at', '<=', date('Y-m-d H:i:s', $purgeMaxDate))
             ->delete();
     }
