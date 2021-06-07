@@ -28,10 +28,36 @@ class IndodaxService
         return $this->_sendPrivate($params);
     }
 
-    public function openOrders()
+    public function openOrders($params)
     {
-        $params = [ 'method' => 'openOrders' ];
+        $params = [ 'method' => 'openOrders' ] + $params;
         return $this->_sendPrivate($params);
+    }
+
+    public function createOrder($params)
+    {
+        $params = [ 'method' => 'trade' ] + $params;
+        return $this->_sendPrivate($params);
+    }
+
+    public function cancelOrder($params)
+    {
+        $params = [ 'method' => 'cancelOrder' ] + $params;
+        return $this->_sendPrivate($params);
+    }
+
+    public function orderHistory($params)
+    {
+        $params = [ 'method' => 'orderHistory' ] + $params;
+        return $this->_sendPrivate($params);
+    }
+
+    public function tradeHistory($params)
+    {
+        $params = [ 'method' => 'tradeHistory' ] + $params;
+        $data = $this->_sendPrivate($params);
+
+        return $data['trades'];
     }
 
     public function tickerAll()
@@ -39,7 +65,15 @@ class IndodaxService
         $params = [ 'path' => '/ticker_all' ];
         $data = $this->_sendPublic($params);
 
-        return $data['tickers'];
+        return isset($data['tickers']) ? $data['tickers'] : false;
+    }
+
+    public function ticker($pair)
+    {
+        $params = [ 'path' => '/ticker/' . $pair ];
+        $data = $this->_sendPublic($params);
+
+        return isset($data['ticker']) ? $data['ticker'] : false;
     }
 
     public function trade($pairs)
@@ -63,22 +97,28 @@ class IndodaxService
 
     public function pairs()
     {
-        $data = Cache::get('pairs');
-        if (!$data) {
-            $params = [ 'path' => '/pairs' ];
-            $result = $this->_sendPublic($params);
+        $params = [ 'path' => '/pairs' ];
+        $result = $this->_sendPublic($params);
 
-            $data = [];
-            foreach ($result as $item) {
-                if ($item['base_currency'] != 'idr') continue;
-                
-                $data[] = $item['id'];
-            }
+        return $result;
+    }
 
-            Cache::put('pairs', $data, $seconds = 3600 * 24);
+    public function history($params) {
+        $tvUrl = str_replace('api', '', $this->public_base_url) . 'tradingview/history';
+        $response = Http::get($tvUrl . '?symbol=' . $params['symbol'] . '&resolution=' 
+            . $params['resolution'] . '&from=' . $params['from'] 
+            . '&to=' . $params['to']);
+
+        if (!$response->successful()) {
+            return [];
         }
 
-        return $data;
+        $backtestData = $response->json();
+        if (!isset($backtestData['s']) || $backtestData['s'] != 'ok') {
+            return [];
+        }
+        
+        return $backtestData;
     }
 
     private function _sendPrivate($params) {

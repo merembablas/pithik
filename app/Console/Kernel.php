@@ -24,10 +24,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        /*
         $schedule->command('data:trade 15m')->everyMinute();
         $schedule->command('data:ticker 1m')->everyMinute();
         $schedule->command('data:transform')->cron('0 9 * * *');
         $schedule->command('data:purge')->cron('0 12 * * *');
+        */
+
+        $schedule->command('pivot:run att_idr')->everyMinute();
     }
 
     /**
