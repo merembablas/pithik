@@ -152,6 +152,27 @@ class RunnerGrid extends Command
             }
         }
 
+        $lastTradeId = isset($this->settings['last_trade_id']) ? $this->settings['last_trade_id'] : 0;
+        if ($lastTradeId != $this->trades[0]['trade_id'] && $this->trades[0]['type'] === 'sell') {
+            $isSendMessage = true;
+            $PLMessage = $this->_summaryText();
+            $info = $this->iddx->info();
+            $quoteBalance = isset($info['balance']) ? $info['balance'][$this->quote] : '-';
+            $messages[] = [
+                'header' => ['info', 'desc'],
+                'data' => [
+                    ['IDR', str_pad(number_format($quoteBalance, 0, ',', '.'), 12, " ", STR_PAD_LEFT)],
+                    ['P/L', str_pad($PLMessage, 12, " ", STR_PAD_LEFT)]
+                ]
+            ];
+
+            $this->settings['last_trade_id'] = $this->trades[0]['trade_id'];
+            DB::table('bots')->where('id', $bots[0]->id)->update([
+                'settings' => json_encode($this->settings),
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+        }
+
         if ($isSendMessage && $this->settings['telegram_chat_id'] > 0) {
             $this->line('* ' .strtoupper($this->base) . '/' . $this->quote . ' * _' . date('d-m-Y H:i') . '_');
             $this->line('```');
@@ -179,6 +200,20 @@ class RunnerGrid extends Command
         }
 
         return intval($tick['last']);
+    }
+
+    private function _summaryText() {
+        $sellTotal = 0;
+        $buyTotal = 0;
+        foreach ($this->trades as $trade) {
+            if ($trade['type'] === 'sell') {
+                $sellTotal = $sellTotal + round($trade[$this->base] * $trade['price']);
+            } else if ($trade['type'] === 'buy') {
+                $buyTotal = $buyTotal + round($trade[$this->base] * $trade['price']);
+            }
+        }
+
+        return number_format($sellTotal - $buyTotal, 0, ',', '.');
     }
 
     private function _filter($str) {

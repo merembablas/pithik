@@ -226,7 +226,7 @@ class RunnerPivot extends Command
             if ($trade['type'] === 'sell') {
                 $sellTotal = $sellTotal + round($trade[$this->base] * $trade['price']);
             } else if ($trade['type'] === 'buy') {
-                $buyTotal = $buyTotal + $trade[$this->quote];
+                $buyTotal = $buyTotal + round($trade[$this->base] * $trade['price']);
             }
         }
 
