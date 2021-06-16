@@ -63,13 +63,19 @@ class BotStart extends Command
             'trade_fee_percent' => $brokerData['trade_fee_percent'],
             'pricescale' => $brokerData['pricescale'],
             'max_amount' => $maxAmount,
-            'max_orders' => 1,
-            'pivot_type' => 'woodie',
-            'pivot_resolution' => 240,
-            'rsi_resolution' => 'D',
-            'rsi_max_number' => 50,
             'telegram_chat_id' => 0
         ];
+
+        if ($type === 'pivot') {
+            $defaultSettings['pivot_type'] = 'woodie';
+            $defaultSettings['pivot_resolution'] = 240;
+            $defaultSettings['rsi_resolution'] = 'D';
+            $defaultSettings['rsi_max_number'] = 50;
+        } else if ($type === 'grid') {
+            $defaultSettings['lower_price'] = 0;
+            $defaultSettings['upper_price'] = 0;
+            $defaultSettings['max_orders'] = 1;
+        }
 
         foreach ($settings as $setting) {
             $split = explode(':', $setting);

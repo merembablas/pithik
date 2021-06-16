@@ -11,9 +11,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 class RunnerGrid extends Command
 {
-    protected $iddx, $tick, $pivot, $rsi, $sma, $pair, $base, $quote, $settings, $info, $trades;
-    protected $resolutionRSI = [ 15 => '-90 hours', 60 => '-15 days', 240 => '-60 days', 'D' => '-360 days' ];
-    protected $resolutionPivot = [ 15 => '-30 minutes', 60 => '-2 hours', 240 => '-8 hours', 'D' => '-2 days' ];
+    protected $iddx, $tick, $pair, $base, $quote, $startedAt, $settings, $corrOrders, $info, $trades;
 
     /**
      * The name and signature of the console command.
@@ -46,18 +44,26 @@ class RunnerGrid extends Command
      */
     public function handle(IndodaxService $iddx)
     {
-        $this->iddx = $iddx;
-        $this->pair = $this->argument('pair');
+        $bots = DB::table('bots')
+            ->where('type', 'grid')
+            ->where('pair', $this->argument('pair'))
+            ->where('status', 'active')->get();
 
-        $maxPrice = 500000;
-        $upperPrice = 55;
-        $lowerPrice = 47;
+        if (count($bots) === 0) {
+            return 0;
+        }
+
+        $this->startedAt = strtotime($bots[0]->started_at);
+        $this->settings = json_decode($bots[0]->settings, true);
+        $this->corrOrders = json_decode($bots[0]->corresponding_orders, true);
 
         $output = new BufferedOutput;
         $this->output = $output;
         $isSendMessage = false;
-        $telegramChatId = 29160291;
         $messages = [];
+
+        $this->iddx = $iddx;
+        $this->pair = $this->argument('pair');
 
         $parse = explode('_', $this->pair);
         $this->base = $parse[0];
@@ -65,9 +71,9 @@ class RunnerGrid extends Command
 
         $this->trades = $this->iddx->tradeHistory([
             'pair' => $this->pair,
-            'since' => strtotime('2021-06-08')
+            'since' => $this->startedAt
         ]);
- 
+
         $lastPrice = $this->_getTicker();
         if (!$lastPrice) {
             return 0;
@@ -86,29 +92,27 @@ class RunnerGrid extends Command
             $orders[$order['price']] = $order['type'];
         }
 
-        foreach (range($lowerPrice, $upperPrice) as $price) {
+        foreach (range($this->settings['lower_price'], $this->settings['upper_price']) as $price) {
             if (!isset($orders[$price]) && $price < $lastPrice) {
                 $info = $this->iddx->info();
                 $quoteBalance = isset($info['balance']) ? $info['balance'][$this->quote] : 0;
 
-                if ($quoteBalance >= $maxPrice) {
+                if ($quoteBalance >= $this->settings['max_amount']) {
                     $orderData = $this->iddx->createOrder([
                         'type' => 'buy',
                         'pair' => $this->pair,
                         'price' => $price,
-                        $this->quote => $maxPrice
+                        $this->quote => $this->settings['max_amount']
                     ]);
 
                     if (isset($orderData['order_id'])) {
                         $isSendMessage = true;
-                        $messageText = $this->_summaryText();
                         $messages[] = [
                             'header' => ['info', 'desc'],
                             'data' => [
                                 ['Event', 'BUY'],
                                 ['Price', $price],
-                                ['Amount', $maxPrice . ' ' . strtoupper($this->quote)],
-                                ['P/L', $messageText]
+                                ['Amount', $this->settings['max_amount'] . ' ' . strtoupper($this->quote)]
                             ]
                         ];
                     }
@@ -148,7 +152,7 @@ class RunnerGrid extends Command
             }
         }
 
-        if ($isSendMessage) {
+        if ($isSendMessage && $this->settings['telegram_chat_id'] > 0) {
             $this->line('* ' .strtoupper($this->base) . '/' . $this->quote . ' * _' . date('d-m-Y H:i') . '_');
             $this->line('```');
             foreach ($messages as $message) {
@@ -160,7 +164,7 @@ class RunnerGrid extends Command
 
             $telegram = new Api(config('telegram.bots.the_pithik_bot.token'));
             $response = $telegram->sendMessage([
-                'chat_id' => $telegramChatId,
+                'chat_id' => $this->settings['telegram_chat_id'],
                 'parse_mode' => 'MarkdownV2',
                 'text' => $message
             ]);
@@ -175,20 +179,6 @@ class RunnerGrid extends Command
         }
 
         return intval($tick['last']);
-    }
-
-    private function _summaryText() {
-        $sellTotal = 0;
-        $buyTotal = 0;
-        foreach ($this->trades as $trade) {
-            if ($trade['type'] === 'sell') {
-                $sellTotal = $sellTotal + round($trade[$this->base] * $trade['price']);
-            } else if ($trade['type'] === 'buy') {
-                $buyTotal = $buyTotal + $trade[$this->quote];
-            }
-        }
-
-        return str_pad(number_format($sellTotal - $buyTotal, 0, ',', '.'), 12, " ", STR_PAD_LEFT);
     }
 
     private function _filter($str) {
