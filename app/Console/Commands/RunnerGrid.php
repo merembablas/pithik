@@ -92,8 +92,10 @@ class RunnerGrid extends Command
             $orders[$order['price']] = $order['type'];
         }
 
-        foreach (range($this->settings['lower_price'], $this->settings['upper_price']) as $price) {
-            if (!isset($orders[$price]) && $price < $lastPrice) {
+        foreach (range($this->settings['lower_price'], $this->settings['upper_price'], $this->settings['pricescale']) as $price) {
+            $nextPrice = $price + $this->settings['pricescale'];
+            $nextOrder = isset($orders[$nextPrice]) ? $orders[$nextPrice] : 'none'; 
+            if (!isset($orders[$price]) && $price < $lastPrice && $nextOrder != 'sell') {
                 $info = $this->iddx->info();
                 $quoteBalance = isset($info['balance']) ? $info['balance'][$this->quote] : 0;
 
@@ -153,7 +155,7 @@ class RunnerGrid extends Command
         }
 
         $lastTradeId = isset($this->settings['last_trade_id']) ? $this->settings['last_trade_id'] : 0;
-        if ($lastTradeId != $this->trades[0]['trade_id'] && $this->trades[0]['type'] === 'sell') {
+        if (isset($this->trades[0]) && $lastTradeId != $this->trades[0]['trade_id'] && $this->trades[0]['type'] === 'sell') {
             $isSendMessage = true;
             $PLMessage = $this->_summaryText();
             $info = $this->iddx->info();
@@ -203,17 +205,16 @@ class RunnerGrid extends Command
     }
 
     private function _summaryText() {
-        $sellTotal = 0;
-        $buyTotal = 0;
+        $profit = 0;
         foreach ($this->trades as $trade) {
             if ($trade['type'] === 'sell') {
-                $sellTotal = $sellTotal + round($trade[$this->base] * $trade['price']);
-            } else if ($trade['type'] === 'buy') {
-                $buyTotal = $buyTotal + round($trade[$this->base] * $trade['price']);
+                $amount = round($trade[$this->base] * $trade['price']);
+                $amount = $amount > $this->settings['max_amount'] ? ($amount  - $this->settings['max_amount']) : 0; 
+                $profit = $profit + $amount;
             }
         }
 
-        return number_format($sellTotal - $buyTotal, 0, ',', '.');
+        return number_format($profit, 0, ',', '.');
     }
 
     private function _filter($str) {
