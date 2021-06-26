@@ -109,13 +109,10 @@ class RunnerGrid extends Command
 
                     if (isset($orderData['order_id'])) {
                         $isSendMessage = true;
+                        $orderData = $this->_orderBook();
                         $messages[] = [
-                            'header' => ['info', 'desc'],
-                            'data' => [
-                                ['Event', 'BUY'],
-                                ['Price', $price],
-                                ['Amount', $this->settings['max_amount'] . ' ' . strtoupper($this->quote)]
-                            ]
+                            'header' => ['buy', 'sell'],
+                            'data' => $orderData
                         ];
                     }
                 }
@@ -138,14 +135,10 @@ class RunnerGrid extends Command
 
                         if (isset($orderData['order_id'])) {
                             $isSendMessage = true;
+                            $orderData = $this->_orderBook();
                             $messages[] = [
-                                'header' => ['info', 'desc'],
-                                'data' => [
-                                    ['Event', 'SELL'],
-                                    ['Price', $price],
-                                    ['Amount', $baseBalance . ' ' . strtoupper($this->base)],
-                                    ['Total', number_format(round($baseBalance * $price), 0, ',', '.') . ' ' . strtoupper($this->quote)]
-                                ]
+                                'header' => ['buy', 'sell'],
+                                'data' => $orderData
                             ];
                         }
                     }
@@ -215,6 +208,36 @@ class RunnerGrid extends Command
         }
 
         return number_format($profit, 0, ',', '.');
+    }
+
+    private function _orderBook() {
+        $data = $this->iddx->openOrders([
+            'pair' => $this->pair,
+        ]);
+
+        $buyOrders = [];
+        $sellOrders = [];
+        foreach ($data['orders'] as $order) {
+            if ($order['type'] === 'buy') {
+                $buyOrders[] = (int) $order['price'];
+            } else {
+                $sellOrders[] = (int) $order['price'];
+            }
+        }
+
+        rsort($buyOrders, SORT_NUMERIC);
+        sort($sellOrders, SORT_NUMERIC);
+        $count = count($buyOrders) > count($sellOrders) ? count($buyOrders) : count($sellOrders);
+
+        $result = [];
+        foreach (range(0, $count - 1) as $index) {
+            $result[] = [
+                isset($buyOrders[$index]) ? $buyOrders[$index] : '',
+                isset($sellOrders[$index]) ? $sellOrders[$index] : ''
+            ];
+        }
+
+        return $result;
     }
 
     private function _filter($str) {
