@@ -30,4 +30,5 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'proxy_url' => env('PROXY_URL')
 ];
