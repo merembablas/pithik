@@ -105,7 +105,7 @@ class IndodaxService
 
     public function history($params) {
         $tvUrl = str_replace('api', '', $this->public_base_url) . 'tradingview/history';
-        $response = Http::withOptions(['proxy' => config('services.proxy_url')])->get($tvUrl . '?symbol=' . $params['symbol'] . '&resolution=' 
+        $response = Http::get($tvUrl . '?symbol=' . $params['symbol'] . '&resolution=' 
             . $params['resolution'] . '&from=' . $params['from'] 
             . '&to=' . $params['to']);
 
@@ -134,7 +134,8 @@ class IndodaxService
         $postData = http_build_query($data, '', '&');
         $sign = hash_hmac('sha512', $postData, config('app.indodax_secret_key'));
 
-        $response = Http::withOptions(['proxy' => config('services.proxy_url')])->withHeaders([
+        //$response = Http::withOptions(['proxy' => config('services.proxy_url')])->withHeaders([
+        $response = Http::withHeaders([
             'Key' => config('app.indodax_api_key'),
             'Sign' => $sign,
             'Content-Type' => 'application/x-www-form-urlencoded'
@@ -148,13 +149,14 @@ class IndodaxService
             }
 
             return $result['return'];
-        } else {
+        } else {print_r($response);
             throw new \Exception('Service to Indodax Failed: No Info');
         }
     }
 
     private function _sendPublic($params) {
-        $response = Http::withOptions(['proxy' => config('services.proxy_url')])->get($this->public_base_url . $params['path']);
+        //$response = Http::withOptions(['proxy' => config('services.proxy_url')])->get($this->public_base_url . $params['path']);
+        $response = Http::get($this->public_base_url . $params['path']);
 
         if ($response->successful()) {
             return $response->json();

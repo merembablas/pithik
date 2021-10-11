@@ -31,8 +31,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('data:purge')->cron('0 12 * * *');
         */
 
-        //$schedule->command('pivot:run att_idr')->everyMinute();
-        $schedule->command('grid:run btt_idr')->everyMinute();
+        $schedule->command('pivot:run usdt_idr')->everyMinute();
+        //$schedule->command('grid:run btt_idr')->everyMinute();
     }
 
     /**
