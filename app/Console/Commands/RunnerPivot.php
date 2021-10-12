@@ -87,7 +87,7 @@ class RunnerPivot extends Command
             $signal['signal'] === 'buy' 
             && $this->rsi <= $this->settings['rsi_max_number'] 
             && $this->settings['rsi_max_number'] > 0
-            //&& $this->sma >= $signal['price']
+            && $this->sma >= $signal['price']
         ) {
             $orderData = $this->iddx->createOrder([
                 'type' => 'buy',
@@ -99,14 +99,14 @@ class RunnerPivot extends Command
             if (isset($orderData['order_id'])) {
                 if ($this->settings['telegram_chat_id'] != 0) {
                     $isSendMessage = true;
-                    $messageText = $this->_summaryText();
+                    //$messageText = $this->_summaryText();
                     $messages[] = [
                         'header' => ['info', 'desc'],
                         'data' => [
                             ['Event', 'BUY'],
                             ['Price', $signal['price']],
                             ['Amount', $signal['amount'] . ' ' . strtoupper($this->quote)],
-                            ['P/L', $messageText]
+                            //['P/L', $messageText]
                         ]
                     ];
                 }
