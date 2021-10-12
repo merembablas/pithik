@@ -149,7 +149,7 @@ class IndodaxService
             }
 
             return $result['return'];
-        } else {print_r($response);
+        } else {
             throw new \Exception('Service to Indodax Failed: No Info');
         }
     }

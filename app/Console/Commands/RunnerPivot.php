@@ -87,7 +87,7 @@ class RunnerPivot extends Command
             $signal['signal'] === 'buy' 
             && $this->rsi <= $this->settings['rsi_max_number'] 
             && $this->settings['rsi_max_number'] > 0
-            && $this->sma >= $signal['price']
+            //&& $this->sma >= $signal['price']
         ) {
             $orderData = $this->iddx->createOrder([
                 'type' => 'buy',
