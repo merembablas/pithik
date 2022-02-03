@@ -18,4 +18,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::post('/1700528905:AAEWs_TUdQeVzlMk5H7IpWHnhIDY3F1dL7E/webhook', [HookController::class, 'index']);
+Route::post('/xxx/webhook', [HookController::class, 'index']);
